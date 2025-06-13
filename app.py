@@ -2,6 +2,71 @@
 import streamlit as st
 import numpy as np
 import joblib
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
+# Carregar os dados já tratados (o mesmo CSV usado no modelo)
+df = pd.read_csv('Obesity.csv')
+
+# Recalcular o IMC (caso não esteja presente no CSV)
+df['imc'] = df['peso'] / (df['altura'] ** 2)
+
+# Sidebar para navegar entre abas
+st.sidebar.title("Menu")
+aba = st.sidebar.radio("Escolha uma aba:", ["Sistema Preditivo", "Painel Analítico"])
+
+if aba == "Painel Analítico":
+    st.title("Painel Analítico sobre Obesidade")
+
+    st.markdown("### Distribuição dos Níveis de Obesidade")
+    fig1, ax1 = plt.subplots()
+    sns.countplot(data=df, x='nivel_obesidade',
+                  order=[
+                      'Insufficient_Weight',
+                      'Normal_Weight',
+                      'Overweight_Level_I',
+                      'Overweight_Level_II',
+                      'Obesity_Type_I',
+                      'Obesity_Type_II',
+                      'Obesity_Type_III'
+                  ],
+                  color='red', ax=ax1)
+    ax1.set_xlabel("Nível de Obesidade", fontsize=9)
+    ax1.set_ylabel("Quantidade", fontsize=9)
+    ax1.tick_params(axis='x', rotation=45, labelsize=8)
+    st.pyplot(fig1)
+
+    st.markdown("### Distribuição do IMC por Nível de Obesidade")
+    fig2, ax2 = plt.subplots()
+    sns.violinplot(data=df, x='nivel_obesidade', y='imc',
+                   order=[
+                       'Insufficient_Weight',
+                       'Normal_Weight',
+                       'Overweight_Level_I',
+                       'Overweight_Level_II',
+                       'Obesity_Type_I',
+                       'Obesity_Type_II',
+                       'Obesity_Type_III'
+                   ],
+                   palette='Reds', ax=ax2)
+    ax2.set_xlabel("Nível de Obesidade", fontsize=9)
+    ax2.set_ylabel("IMC (kg/m²)", fontsize=9)
+    ax2.tick_params(axis='x', rotation=45, labelsize=8)
+    st.pyplot(fig2)
+
+    st.markdown("### Distribuição de Variáveis Numéricas")
+    fig3, axs = plt.subplots(1, 3, figsize=(18, 4))
+    sns.histplot(df['idade'], kde=True, bins=20, color='red', ax=axs[0])
+    axs[0].set_title('Idade'); axs[0].set_xlabel('Idade'); axs[0].set_ylabel('Frequência')
+
+    sns.histplot(df['altura'], kde=True, bins=20, color='orange', ax=axs[1])
+    axs[1].set_title('Altura'); axs[1].set_xlabel('Altura'); axs[1].set_ylabel('Frequência')
+
+    sns.histplot(df['peso'], kde=True, bins=20, color='blue', ax=axs[2])
+    axs[2].set_title('Peso'); axs[2].set_xlabel('Peso'); axs[2].set_ylabel('Frequência')
+
+    st.pyplot(fig3)
 
 # Carregando modelo e pré-processadores
 modelo = joblib.load('modelo_obesidade.pkl')
