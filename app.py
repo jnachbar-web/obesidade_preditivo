@@ -9,6 +9,24 @@ import pandas as pd
 # Carregar os dados já tratados (o mesmo CSV usado no modelo)
 df = pd.read_csv('Obesity.csv')
 
+df.rename(columns={'Gender':'genero',
+                   'Age':'idade',
+                   'Height':'altura',
+                   'Weight':'peso',
+                   'family_history':'historico_familiar',
+                   'FAVC':'consome_alta_calorias',
+                   'FCVC':'consome_vegetais',
+                   'NCP':'qtde_refeicoes',
+                   'CAEC':'consumo_entre_refeicoes',
+                   'SMOKE':'fuma',
+                   'CH2O':'qtde_agua',
+                   'SCC':'monitora_calorias',
+                   'FAF':'freq_atividade_fisica',
+                   'TUE':'tempo_uso_dispositivos',
+                   'CALC':'freq_consumo_alcool',
+                   'MTRANS':'meio_transporte',
+                   'Obesity':'nivel_obesidade'}, inplace=True)
+
 # Recalcular o IMC (caso não esteja presente no CSV)
 df['imc'] = df['peso'] / (df['altura'] ** 2)
 
