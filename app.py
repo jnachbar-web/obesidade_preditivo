@@ -62,8 +62,10 @@ entrada_categorica = [
 
 # --- Vetor numérico (será padronizado) ---
 entrada_numerica = scaler.transform([[
-    idade, consome_vegetais, qtde_refeicoes, qtde_agua,
-    freq_atividade_fisica, tempo_uso_dispositivos, imc
+    idade, altura, peso, consome_vegetais,
+    qtde_refeicoes, qtde_agua,
+    freq_atividade_fisica, tempo_uso_dispositivos,
+    imc
 ]])
 
 # --- Combina as duas partes (categorias + numericas padronizadas) ---
