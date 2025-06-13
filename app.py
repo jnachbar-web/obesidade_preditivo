@@ -73,6 +73,6 @@ entrada_final = np.hstack([entrada_categorica, entrada_numerica[0]])
 
 # --- Realiza a previsão ---
 if st.button("Realizar Previsão"):
-    resultado = modelo.predict([entrada_final])
+    resultado = modelo.predict(np.array([entrada_final]))
     classe = label_encoder.inverse_transform(resultado)[0]
     st.success(f"**Previsão:** {classe.replace('_', ' ')}")
