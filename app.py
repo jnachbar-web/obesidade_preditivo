@@ -61,15 +61,17 @@ entrada_categorica = [
 ]
 
 # --- Vetor numérico (será padronizado) ---
-entrada_numerica = scaler.transform([[
+entrada_numerica_escalada = scaler.transform([[
     idade, altura, peso, consome_vegetais,
     qtde_refeicoes, qtde_agua,
     freq_atividade_fisica, tempo_uso_dispositivos,
     imc
 ]])
 
+entrada_numerica_final = np.delete(entrada_numerica_escalada, [1, 2], axis=1)
+
 # --- Combina as duas partes (categorias + numericas padronizadas) ---
-entrada_final = np.hstack([entrada_categorica, entrada_numerica[0]])
+entrada_final = np.hstack([entrada_categorica, entrada_numerica_final[0]])
 
 # --- Realiza a previsão ---
 if st.button("Realizar Previsão"):
