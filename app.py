@@ -83,23 +83,26 @@ if aba == "Sistema Preditivo":
         mapeamentos['genero'][genero],
         mapeamentos['historico_familiar'][historico],
         mapeamentos['consome_alta_calorias_frequente'][consome_calorias],
+        mapeamentos['consumo_vegetais'][consumo_vegetais],
         mapeamentos['alimentacao_entre_refeicoes'][alimentacao],
         mapeamentos['fuma'][fuma],
         mapeamentos['monitora_calorias'][monitora_calorias],
         mapeamentos['freq_consumo_alcool'][alcool],
-        mapeamentos['meio_transporte_contumaz'][transporte]
+        mapeamentos['meio_transporte_contumaz'][transporte],
+        mapeamentos['freq_atividade_fisica'][atividade]
     ]
 
     # ✔️ Vetor numérico (será escalado)
     entrada_numerica = np.array([[
-        idade, altura, peso, consumo_vegetais,
-        qtde_refeicoes, qtde_agua, tempo_dispositivo,
-        mapeamentos['freq_atividade_fisica'][atividade]
+        idade,
+        altura,
+        peso,
+        qtde_refeicoes,
+        qtde_agua,
+        tempo_dispositivo
     ]])
 
     entrada_numerica_escalada = scaler.transform(entrada_numerica)
-
-    # ✔️ Concatenar vetor categórico + numérico
     entrada_final = np.hstack([entrada_categorica, entrada_numerica_escalada[0]])
 
     if st.button("Realizar Previsão"):
