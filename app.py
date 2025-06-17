@@ -75,7 +75,8 @@ if aba == "Sistema Preditivo":
             'Automobile': 0, 'Bike': 1, 'Motorbike': 2,
             'Public_Transportation': 3, 'Walking': 4
         },
-        'freq_atividade_fisica': {'Nunca': 0, 'Pouquíssima': 1, 'Moderada': 2, 'Frequente': 3}
+        'freq_atividade_fisica': {'Nunca': 0, 'Pouquíssima': 1, 'Moderada': 2, 'Frequente': 3},
+            'consumo_vegetais': {1.0: 1, 2.0: 2, 3.0: 3}  # ✔️ 🔥 Este é o mapeamento que faltava!
     }
 
     # ✔️ Vetor categórico
