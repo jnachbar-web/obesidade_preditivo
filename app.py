@@ -1,5 +1,7 @@
 
-# 🔥 Importações
+# ======================
+# 📦 Importações
+# ======================
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -7,15 +9,18 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import joblib
 
-# 🔥 Carregar modelo e artefatos
+# ======================
+# 📂 Carregar Artefatos
+# ======================
 modelo = joblib.load('modelo_obesidade.pkl')
 scaler = joblib.load('scaler.pkl')
 label_encoder = joblib.load('label_encoder_target.pkl')
 
-# 🔥 Carregar base de dados para o painel
 df = pd.read_csv('Obesity.csv')
 
-# 🔥 Renomear colunas
+# ======================
+# 🏷️ Renomear Colunas
+# ======================
 df.rename(columns={
     'Gender':'genero', 'Age':'idade', 'Height':'altura', 'Weight':'peso',
     'family_history':'historico_familiar', 'FAVC':'consome_alta_calorias_frequente',
@@ -27,19 +32,23 @@ df.rename(columns={
     'Obesity':'nivel_obesidade'
 }, inplace=True)
 
-# 🔥 Sidebar de navegação
+# ======================
+# 🎨 Sidebar Navegação
+# ======================
 st.sidebar.title("Menu")
 aba = st.sidebar.radio("Escolha uma aba:", ["Sistema Preditivo", "Painel Analítico"])
 
-# ===================================================================
-# 🧠 🔍 Aba — Sistema Preditivo
-# ===================================================================
+# ===================================================
+# 🔬 🧠 Aba — Sistema Preditivo
+# ===================================================
 if aba == "Sistema Preditivo":
     st.title("🔬 Sistema Preditivo de Obesidade")
 
     st.subheader("📄 Informe os dados do paciente:")
 
-    # 🔥 Mapeamentos para exibir em português
+    # ======================
+    # 🗺️ Mapeamentos
+    # ======================
     genero_map = {'Masculino': 'Male', 'Feminino': 'Female'}
     historico_map = {'Sim': 'yes', 'Não': 'no'}
     alta_caloria_map = {'Sim': 'yes', 'Não': 'no'}
@@ -56,7 +65,9 @@ if aba == "Sistema Preditivo":
     }
     atividade_map = {'Nunca': 0, 'Pouquíssima': 1, 'Moderada': 2, 'Frequente': 3}
 
-    # 🔥 Inputs do usuário
+    # ======================
+    # 🎯 Inputs do Usuário
+    # ======================
     genero = st.selectbox('Gênero', list(genero_map.keys()))
     historico = st.selectbox('Histórico Familiar de Obesidade', list(historico_map.keys()))
     consome_calorias = st.selectbox('Consome alimentos calóricos com frequência?', list(alta_caloria_map.keys()))
@@ -77,49 +88,64 @@ if aba == "Sistema Preditivo":
     qtde_agua = st.slider('Litros de água por dia', 1.0, 3.0, 2.0)
     tempo_dispositivo = st.slider('Horas de uso de dispositivos por dia', 0.0, 5.0, 2.0)
 
-    # 🔥 Vetor categórico
-    entrada_categorica = [
-        genero_map[genero],
-        historico_map[historico],
-        alta_caloria_map[consome_calorias],
-        alimentacao_map[alimentacao],
-        fuma_map[fuma],
-        monitora_map[monitora_calorias],
-        alcool_map[alcool],
-        transporte_map[transporte],
-        atividade_map[atividade],
-        consumo_vegetais
+    # ======================
+    # 🏗️ Construir DataFrame de Entrada
+    # ======================
+    colunas = [
+        'genero', 'idade', 'altura', 'peso', 'historico_familiar',
+        'consome_alta_calorias_frequente', 'consumo_vegetais',
+        'qtde_refeicoes_principais', 'alimentacao_entre_refeicoes', 'fuma',
+        'qtde_agua_diaria', 'monitora_calorias', 'freq_atividade_fisica',
+        'tempo_uso_dispositivos', 'freq_consumo_alcool', 'meio_transporte_contumaz'
     ]
 
-    # 🔥 Vetor numérico
-    entrada_numerica = np.array([[
-        idade, altura, peso, qtde_refeicoes,
-        qtde_agua, tempo_dispositivo
-    ]])
+    entrada = pd.DataFrame([[
+        genero_map[genero],
+        idade,
+        altura,
+        peso,
+        historico_map[historico],
+        alta_caloria_map[consome_calorias],
+        consumo_vegetais,
+        qtde_refeicoes,
+        alimentacao_map[alimentacao],
+        fuma_map[fuma],
+        qtde_agua,
+        monitora_map[monitora_calorias],
+        atividade_map[atividade],
+        tempo_dispositivo,
+        alcool_map[alcool],
+        transporte_map[transporte]
+    ]], columns=colunas)
 
-    # 🔥 Escalonamento
-    entrada_numerica_escalada = scaler.transform(entrada_numerica)
+    # ======================
+    # 🔧 Padronizar Numéricas
+    # ======================
+    colunas_numericas = ['idade', 'altura', 'peso', 'qtde_refeicoes_principais',
+                          'qtde_agua_diaria', 'tempo_uso_dispositivos']
 
-    # 🔥 Combinar entrada final
-    entrada_final = np.hstack([entrada_categorica, entrada_numerica_escalada[0]])
+    entrada[colunas_numericas] = scaler.transform(entrada[colunas_numericas])
 
-    # 🔥 Checagem de consistência
-    if len(entrada_final) != modelo.n_features_in_:
-        st.error(f"❌ Erro na quantidade de variáveis. Esperado {modelo.n_features_in_}, recebido {len(entrada_final)}.")
-        st.stop()
+    # ======================
+    # 🔍 Exibir Dados
+    # ======================
+    st.subheader("🔎 Dados para Predição")
+    st.dataframe(entrada)
 
+    # ======================
+    # 🚀 Realizar Predição
+    # ======================
     if st.button("Realizar Previsão"):
-        resultado = modelo.predict([entrada_final])
+        resultado = modelo.predict(entrada)
         classe = label_encoder.inverse_transform(resultado)[0]
         st.success(f"🔍 Resultado: **{classe.replace('_', ' ')}**")
 
-# ===================================================================
-# 📊 🔍 Aba — Painel Analítico
-# ===================================================================
+# ===================================================
+# 📊 Painel Analítico
+# ===================================================
 if aba == "Painel Analítico":
     st.title("📊 Painel Analítico sobre Obesidade")
 
-    # ✔️ Layout em colunas
     st.subheader("Distribuição dos Níveis de Obesidade")
     fig, ax = plt.subplots(figsize=(6,4))
     sns.countplot(data=df, y='nivel_obesidade', color='red', ax=ax)
@@ -127,6 +153,7 @@ if aba == "Painel Analítico":
     ax.set_ylabel('Nível de Obesidade')
     st.pyplot(fig)
 
+    # ✔️ Layout em colunas
     col1, col2 = st.columns(2)
 
     with col1:
