@@ -6,7 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import joblib
 
-st.set_page_config(page_title="Predição de Obesidade - Sistema e Painel", layout="wide")
+st.set_page_config(page_title="Predição de Obesidade", layout="wide")
 
 # ============================
 # 📂 Carregar Dados
@@ -34,7 +34,6 @@ df.rename(columns={
     'Obesity': 'nivel_obesidade'
 }, inplace=True)
 
-# ✔️ Mapear níveis de obesidade
 mapa_obesidade = {
     'Insufficient_Weight': 'Abaixo do Peso',
     'Normal_Weight': 'Peso Normal',
@@ -96,8 +95,9 @@ if aba == "Sistema Preditivo":
     for col in le_categoricas.keys():
         entrada[col] = le_categoricas[col].transform(entrada[col])
 
-    cols_numericas = ['idade', 'altura', 'peso', 'qtde_refeicoes_principais',
-                       'qtde_agua_diaria', 'tempo_uso_dispositivos']
+    cols_numericas = ['idade', 'altura', 'peso', 'consumo_vegetais',
+                       'qtde_refeicoes_principais', 'qtde_agua_diaria',
+                       'freq_atividade_fisica', 'tempo_uso_dispositivos']
     entrada[cols_numericas] = scaler.transform(entrada[cols_numericas])
 
     if st.button("Realizar Previsão"):
@@ -111,18 +111,22 @@ if aba == "Sistema Preditivo":
 if aba == "Painel Analítico":
     st.title("📊 Painel Analítico de Obesidade")
 
-    # ✔️ Gráfico 1 - Distribuição dos Níveis de Obesidade
-    fig1, ax1 = plt.subplots(figsize=(6,4))
-    sns.countplot(data=df, y='nivel_obesidade', color='red', order=ordem_obesidade, ax=ax1)
-    st.pyplot(fig1)
+    col1, col2 = st.columns(2)
 
-    # ✔️ Gráfico 2 - Distribuição do IMC
-    fig2, ax2 = plt.subplots(figsize=(7,4))
-    sns.violinplot(data=df, x='nivel_obesidade', y='imc', palette='Reds', order=ordem_obesidade, ax=ax2)
-    ax2.tick_params(axis='x', rotation=45)
-    st.pyplot(fig2)
+    with col1:
+        st.subheader("Distribuição dos Níveis de Obesidade")
+        fig1, ax1 = plt.subplots(figsize=(6,4))
+        sns.countplot(data=df, y='nivel_obesidade', color='red', order=ordem_obesidade, ax=ax1)
+        st.pyplot(fig1)
 
-    # ✔️ Gráfico 3 - Idade, altura, peso
+    with col2:
+        st.subheader("Distribuição do IMC por Nível de Obesidade")
+        fig2, ax2 = plt.subplots(figsize=(7,4))
+        sns.violinplot(data=df, x='nivel_obesidade', y='imc', palette='Reds', order=ordem_obesidade, ax=ax2)
+        ax2.tick_params(axis='x', rotation=45)
+        st.pyplot(fig2)
+
+    st.subheader("Distribuição de Idade, Altura e Peso")
     fig3, axs = plt.subplots(1, 3, figsize=(15,4))
     sns.histplot(df['idade'], kde=True, color='red', ax=axs[0])
     sns.histplot(df['altura'], kde=True, color='orange', ax=axs[1])
