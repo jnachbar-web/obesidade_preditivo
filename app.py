@@ -4,6 +4,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+st.set_page_config(page_title="Painel Analítico - Predição de Obesidade", layout="wide")
+
 # ✔️ Carregar os dados
 df = pd.read_csv('Obesity.csv')
 
@@ -24,11 +26,19 @@ df.rename(columns={
     'FAF': 'freq_atividade_fisica',
     'TUE': 'tempo_uso_dispositivos',
     'CALC': 'freq_consumo_alcool',
-    'MTRANS': 'meio_transporte_contumaz',
-    'NObesity': 'nivel_obesidade'
+    'MTRANS': 'meio_transporte_contumaz'
 }, inplace=True)
 
-# ✔️ Mapear os níveis de obesidade para português e garantir ordem
+# ✔️ Conferir e renomear a coluna alvo
+if 'Obesity' in df.columns:
+    df.rename(columns={'Obesity': 'nivel_obesidade'}, inplace=True)
+elif 'NObesity' in df.columns:
+    df.rename(columns={'NObesity': 'nivel_obesidade'}, inplace=True)
+else:
+    st.error("❌ Erro: A coluna de nível de obesidade não foi encontrada no CSV.")
+    st.stop()
+
+# ✔️ Mapear os níveis de obesidade
 mapa_obesidade = {
     'Insufficient_Weight': 'Abaixo do Peso',
     'Normal_Weight': 'Peso Normal',
@@ -38,26 +48,27 @@ mapa_obesidade = {
     'Obesity_Type_II': 'Obesidade - Nível II',
     'Obesity_Type_III': 'Obesidade - Nível III'
 }
-
 ordem_obesidade = list(mapa_obesidade.values())
 
 df['nivel_obesidade'] = df['nivel_obesidade'].map(mapa_obesidade)
 df['nivel_obesidade'] = pd.Categorical(df['nivel_obesidade'], categories=ordem_obesidade, ordered=True)
 
-# ✔️ Streamlit Interface
+# ✔️ Calcular IMC
+df['imc'] = df['peso'] / (df['altura'] ** 2)
+
+# ========== Streamlit Layout ==========
 st.title('Painel Analítico - Predição de Obesidade')
 
 # ✔️ Gráfico 1 - Distribuição dos Níveis de Obesidade
 st.subheader('Distribuição dos Níveis de Obesidade')
-fig1, ax = plt.subplots(figsize=(6,4))
-sns.countplot(data=df, y='nivel_obesidade', color='red', order=ordem_obesidade, ax=ax)
-ax.set_xlabel('Quantidade')
-ax.set_ylabel('Nível de Obesidade')
+fig1, ax1 = plt.subplots(figsize=(6,4))
+sns.countplot(data=df, y='nivel_obesidade', color='red', order=ordem_obesidade, ax=ax1)
+ax1.set_xlabel('Quantidade')
+ax1.set_ylabel('Nível de Obesidade')
 st.pyplot(fig1)
 
 # ✔️ Gráfico 2 - Distribuição do IMC
 st.subheader('Distribuição do IMC por Nível de Obesidade')
-df['imc'] = df['peso'] / (df['altura']**2)
 fig2, ax2 = plt.subplots(figsize=(7,4))
 sns.violinplot(data=df, x='nivel_obesidade', y='imc', order=ordem_obesidade, palette='Reds', ax=ax2)
 ax2.set_xlabel('Nível de Obesidade')
@@ -81,4 +92,3 @@ for ax in axs:
     ax.set_ylabel('Frequência')
 
 st.pyplot(fig3)
-
