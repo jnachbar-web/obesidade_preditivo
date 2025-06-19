@@ -1,7 +1,7 @@
 
-# ======================
+# ============================
 # 📦 Importações
-# ======================
+# ============================
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -9,18 +9,18 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import joblib
 
-# ======================
-# 📂 Carregar Artefatos
-# ======================
+# ============================
+# 📂 Carregar artefatos
+# ============================
 modelo = joblib.load('modelo_obesidade.pkl')
 scaler = joblib.load('scaler.pkl')
 label_encoder = joblib.load('label_encoder_target.pkl')
 
 df = pd.read_csv('Obesity.csv')
 
-# ======================
-# 🏷️ Renomear Colunas
-# ======================
+# ============================
+# 🏷️ Renomear colunas
+# ============================
 df.rename(columns={
     'Gender':'genero', 'Age':'idade', 'Height':'altura', 'Weight':'peso',
     'family_history':'historico_familiar', 'FAVC':'consome_alta_calorias_frequente',
@@ -32,9 +32,9 @@ df.rename(columns={
     'Obesity':'nivel_obesidade'
 }, inplace=True)
 
-# ======================
-# 🎨 Sidebar Navegação
-# ======================
+# ============================
+# 🎨 Sidebar navegação
+# ============================
 st.sidebar.title("Menu")
 aba = st.sidebar.radio("Escolha uma aba:", ["Sistema Preditivo", "Painel Analítico"])
 
@@ -46,9 +46,9 @@ if aba == "Sistema Preditivo":
 
     st.subheader("📄 Informe os dados do paciente:")
 
-    # ======================
+    # ============================
     # 🗺️ Mapeamentos
-    # ======================
+    # ============================
     genero_map = {'Masculino': 'Male', 'Feminino': 'Female'}
     historico_map = {'Sim': 'yes', 'Não': 'no'}
     alta_caloria_map = {'Sim': 'yes', 'Não': 'no'}
@@ -65,9 +65,20 @@ if aba == "Sistema Preditivo":
     }
     atividade_map = {'Nunca': 0, 'Pouquíssima': 1, 'Moderada': 2, 'Frequente': 3}
 
-    # ======================
+    # ✔️ Mapeamento para LabelEncoder numérico
+    map_genero = {'Male': 1, 'Female': 0}
+    map_historico = {'yes': 1, 'no': 0}
+    map_calorias = {'yes': 1, 'no': 0}
+    map_alimentacao = {'no': 0, 'Sometimes': 1, 'Frequently': 2, 'Always': 3}
+    map_fuma = {'yes': 1, 'no': 0}
+    map_monitora = {'yes': 1, 'no': 0}
+    map_alcool = {'no': 0, 'Sometimes': 1, 'Frequently': 2, 'Always': 3}
+    map_transporte = {'Automobile': 0, 'Bike': 1, 'Motorbike': 2, 'Public_Transportation': 3, 'Walking': 4}
+    map_atividade = {'Nunca': 0, 'Pouquíssima': 1, 'Moderada': 2, 'Frequente': 3}
+
+    # ============================
     # 🎯 Inputs do Usuário
-    # ======================
+    # ============================
     genero = st.selectbox('Gênero', list(genero_map.keys()))
     historico = st.selectbox('Histórico Familiar de Obesidade', list(historico_map.keys()))
     consome_calorias = st.selectbox('Consome alimentos calóricos com frequência?', list(alta_caloria_map.keys()))
@@ -88,9 +99,9 @@ if aba == "Sistema Preditivo":
     qtde_agua = st.slider('Litros de água por dia', 1.0, 3.0, 2.0)
     tempo_dispositivo = st.slider('Horas de uso de dispositivos por dia', 0.0, 5.0, 2.0)
 
-    # ======================
+    # ============================
     # 🏗️ Construir DataFrame de Entrada
-    # ======================
+    # ============================
     colunas = [
         'genero', 'idade', 'altura', 'peso', 'historico_familiar',
         'consome_alta_calorias_frequente', 'consumo_vegetais',
@@ -100,41 +111,41 @@ if aba == "Sistema Preditivo":
     ]
 
     entrada = pd.DataFrame([[
-        genero_map[genero],
+        map_genero[genero_map[genero]],
         idade,
         altura,
         peso,
-        historico_map[historico],
-        alta_caloria_map[consome_calorias],
+        map_historico[historico_map[historico]],
+        map_calorias[alta_caloria_map[consome_calorias]],
         consumo_vegetais,
         qtde_refeicoes,
-        alimentacao_map[alimentacao],
-        fuma_map[fuma],
+        map_alimentacao[alimentacao_map[alimentacao]],
+        map_fuma[fuma_map[fuma]],
         qtde_agua,
-        monitora_map[monitora_calorias],
-        atividade_map[atividade],
+        map_monitora[monitora_map[monitora_calorias]],
+        map_atividade[atividade],
         tempo_dispositivo,
-        alcool_map[alcool],
-        transporte_map[transporte]
+        map_alcool[alcool_map[alcool]],
+        map_transporte[transporte_map[transporte]]
     ]], columns=colunas)
 
-    # ======================
+    # ============================
     # 🔧 Padronizar Numéricas
-    # ======================
+    # ============================
     colunas_numericas = ['idade', 'altura', 'peso', 'qtde_refeicoes_principais',
                           'qtde_agua_diaria', 'tempo_uso_dispositivos']
 
     entrada[colunas_numericas] = scaler.transform(entrada[colunas_numericas])
 
-    # ======================
+    # ============================
     # 🔍 Exibir Dados
-    # ======================
+    # ============================
     st.subheader("🔎 Dados para Predição")
     st.dataframe(entrada)
 
-    # ======================
+    # ============================
     # 🚀 Realizar Predição
-    # ======================
+    # ============================
     if st.button("Realizar Previsão"):
         resultado = modelo.predict(entrada)
         classe = label_encoder.inverse_transform(resultado)[0]
