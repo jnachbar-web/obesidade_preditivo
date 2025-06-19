@@ -2,23 +2,19 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.pyplot as plt
 import joblib
 
-# ✔️ Configuração da página
-st.set_page_config(
-    page_title="Sistema Preditivo e Analítico de Obesidade",
-    layout="wide"
-)
+# 🔥 Carregar modelo e artefatos
+modelo = joblib.load('modelo_obesidade.pkl')
+scaler = joblib.load('scaler.pkl')
+label_encoder = joblib.load('label_encoder_target.pkl')
 
-st.sidebar.title("Menu")
-aba = st.sidebar.radio("Escolha uma aba:", ["Sistema Preditivo", "Painel Analítico"])
-
-# ✔️ Carregar a base de dados (para o painel analítico)
+# 🔥 Carregar base de dados para o painel
 df = pd.read_csv('Obesity.csv')
 
-# ✔️ Renomear colunas para português
+# 🔥 Renomear colunas (obrigatório para funcionar o painel)
 df.rename(columns={
     'Gender':'genero', 'Age':'idade', 'Height':'altura', 'Weight':'peso',
     'family_history':'historico_familiar', 'FAVC':'consome_alta_calorias_frequente',
@@ -26,84 +22,83 @@ df.rename(columns={
     'CAEC':'alimentacao_entre_refeicoes', 'SMOKE':'fuma', 'CH2O':'qtde_agua_diaria',
     'SCC':'monitora_calorias', 'FAF':'freq_atividade_fisica',
     'TUE':'tempo_uso_dispositivos', 'CALC':'freq_consumo_alcool',
-    'MTRANS':'meio_transporte_contumaz', 'NObeyesdad':'nivel_obesidade'
+    'MTRANS':'meio_transporte_contumaz', 'NObeyesdad':'nivel_obesidade',
+    'Obesity':'nivel_obesidade'
 }, inplace=True)
 
-# ✔️ Carregar os arquivos salvos
-modelo = joblib.load('modelo_obesidade.pkl')
-scaler = joblib.load('scaler.pkl')
-label_encoder = joblib.load('label_encoder_target.pkl')
+# 🔥 Sidebar de navegação
+st.sidebar.title("Menu")
+aba = st.sidebar.radio("Escolha uma aba:", ["Sistema Preditivo", "Painel Analítico"])
 
 # ===================================================================
-# 🎯 Aba — SISTEMA PREDITIVO
+# 🧠 🔍 Aba — Sistema Preditivo
 # ===================================================================
-
 if aba == "Sistema Preditivo":
     st.title("🔬 Sistema Preditivo de Obesidade")
 
-    st.subheader("Preencha os dados do paciente:")
+    st.subheader("📄 Informe os dados do paciente:")
 
-    # ✔️ Inputs
-    genero = st.selectbox("Gênero", ["Male", "Female"])
-    idade = st.slider("Idade", 10, 100, 25)
-    altura = st.slider("Altura (em metros)", 1.0, 2.2, 1.70)
-    peso = st.slider("Peso (kg)", 30.0, 200.0, 70.0)
-    historico = st.selectbox("Histórico Familiar de Obesidade", ["yes", "no"])
-    consome_calorias = st.selectbox("Consome Alimentos Calóricos?", ["yes", "no"])
-    consumo_vegetais = st.slider("Consumo de Vegetais (1 a 3)", 1.0, 3.0, 2.0)
-    qtde_refeicoes = st.slider("Refeições Principais por Dia", 1.0, 4.0, 3.0)
-    alimentacao = st.selectbox("Come entre Refeições?", ["no", "Sometimes", "Frequently", "Always"])
-    fuma = st.selectbox("Fuma?", ["yes", "no"])
-    qtde_agua = st.slider("Litros de Água por Dia", 1.0, 3.0, 2.0)
-    monitora_calorias = st.selectbox("Monitora Calorias?", ["yes", "no"])
-    atividade = st.selectbox("Nível de Atividade Física", ["Nunca", "Pouquíssima", "Moderada", "Frequente"])
-    tempo_dispositivo = st.slider("Horas em Dispositivos por Dia", 0.0, 3.0, 1.0)
-    alcool = st.selectbox("Consumo de Álcool", ["no", "Sometimes", "Frequently", "Always"])
-    transporte = st.selectbox("Meio de Transporte Predominante", [
-        "Automobile", "Motorbike", "Bike", "Public_Transportation", "Walking"])
-
-    # ✔️ Mapear variáveis categóricas
-    mapeamentos = {
-        'genero': {'Male': 1, 'Female': 0},
-        'historico_familiar': {'yes': 1, 'no': 0},
-        'consome_alta_calorias_frequente': {'yes': 1, 'no': 0},
-        'alimentacao_entre_refeicoes': {'no': 0, 'Sometimes': 1, 'Frequently': 2, 'Always': 3},
-        'fuma': {'yes': 1, 'no': 0},
-        'monitora_calorias': {'yes': 1, 'no': 0},
-        'freq_consumo_alcool': {'no': 0, 'Sometimes': 1, 'Frequently': 2, 'Always': 3},
-        'meio_transporte_contumaz': {
-            'Automobile': 0, 'Bike': 1, 'Motorbike': 2,
-            'Public_Transportation': 3, 'Walking': 4
-        },
-        'freq_atividade_fisica': {'Nunca': 0, 'Pouquíssima': 1, 'Moderada': 2, 'Frequente': 3},
-            'consumo_vegetais': {1.0: 1, 2.0: 2, 3.0: 3}  # ✔️ 🔥 Este é o mapeamento que faltava!
+    # 🔥 Mapeamentos para exibir em português
+    genero_map = {'Masculino': 'Male', 'Feminino': 'Female'}
+    historico_map = {'Sim': 'yes', 'Não': 'no'}
+    alta_caloria_map = {'Sim': 'yes', 'Não': 'no'}
+    alimentacao_map = {'Não': 'no', 'Às vezes': 'Sometimes', 'Frequente': 'Frequently', 'Sempre': 'Always'}
+    fuma_map = {'Sim': 'yes', 'Não': 'no'}
+    monitora_map = {'Sim': 'yes', 'Não': 'no'}
+    alcool_map = {'Não': 'no', 'Às vezes': 'Sometimes', 'Frequente': 'Frequently', 'Sempre': 'Always'}
+    transporte_map = {
+        'Automóvel': 'Automobile',
+        'Motocicleta': 'Motorbike',
+        'Bicicleta': 'Bike',
+        'Transporte Público': 'Public_Transportation',
+        'Caminhada': 'Walking'
     }
+    atividade_map = {'Nunca': 0, 'Pouquíssima': 1, 'Moderada': 2, 'Frequente': 3}
+    vegetais_map = {1.0: 1, 2.0: 2, 3.0: 3}
 
-    # ✔️ Vetor categórico
+    # 🔥 Inputs do usuário
+    genero = st.selectbox('Gênero', list(genero_map.keys()))
+    historico = st.selectbox('Histórico Familiar de Obesidade', list(historico_map.keys()))
+    consome_calorias = st.selectbox('Consome alimentos calóricos com frequência?', list(alta_caloria_map.keys()))
+    alimentacao = st.selectbox('Come entre as refeições?', list(alimentacao_map.keys()))
+    fuma = st.selectbox('Fuma?', list(fuma_map.keys()))
+    monitora_calorias = st.selectbox('Monitora as calorias ingeridas?', list(monitora_map.keys()))
+    alcool = st.selectbox('Frequência de consumo de álcool', list(alcool_map.keys()))
+    transporte = st.selectbox('Meio de transporte mais usado', list(transporte_map.keys()))
+    atividade = st.selectbox('Frequência de atividade física', list(atividade_map.keys()))
+    consumo_vegetais = st.selectbox('Consumo de vegetais nas refeições', [1.0, 2.0, 3.0])
+
+    idade = st.slider('Idade', 10, 100, 30)
+    altura = st.slider('Altura (em metros)', 1.0, 2.2, 1.70)
+    peso = st.slider('Peso (kg)', 30.0, 200.0, 70.0)
+    qtde_refeicoes = st.slider('Refeições principais por dia', 1, 4, 3)
+    qtde_agua = st.slider('Litros de água por dia', 1.0, 3.0, 2.0)
+    tempo_dispositivo = st.slider('Horas de uso de dispositivos por dia', 0.0, 5.0, 2.0)
+
+    # 🔥 Vetor categórico
     entrada_categorica = [
-        mapeamentos['genero'][genero],
-        mapeamentos['historico_familiar'][historico],
-        mapeamentos['consome_alta_calorias_frequente'][consome_calorias],
-        mapeamentos['consumo_vegetais'][consumo_vegetais],
-        mapeamentos['alimentacao_entre_refeicoes'][alimentacao],
-        mapeamentos['fuma'][fuma],
-        mapeamentos['monitora_calorias'][monitora_calorias],
-        mapeamentos['freq_consumo_alcool'][alcool],
-        mapeamentos['meio_transporte_contumaz'][transporte],
-        mapeamentos['freq_atividade_fisica'][atividade]
+        genero_map[genero],
+        historico_map[historico],
+        alta_caloria_map[consome_calorias],
+        consumo_vegetais,
+        alimentacao_map[alimentacao],
+        fuma_map[fuma],
+        monitora_map[monitora_calorias],
+        alcool_map[alcool],
+        transporte_map[transporte],
+        atividade_map[atividade]
     ]
 
-    # ✔️ Vetor numérico (será escalado)
+    # 🔥 Vetor numérico
     entrada_numerica = np.array([[
-        idade,
-        altura,
-        peso,
-        qtde_refeicoes,
-        qtde_agua,
-        tempo_dispositivo
+        idade, altura, peso, qtde_refeicoes,
+        qtde_agua, tempo_dispositivo
     ]])
 
+    # 🔥 Escalonamento
     entrada_numerica_escalada = scaler.transform(entrada_numerica)
+
+    # 🔥 Combinar entrada final
     entrada_final = np.hstack([entrada_categorica, entrada_numerica_escalada[0]])
 
     if st.button("Realizar Previsão"):
@@ -112,40 +107,35 @@ if aba == "Sistema Preditivo":
         st.success(f"🔍 Resultado: **{classe.replace('_', ' ')}**")
 
 # ===================================================================
-# 🎯 Aba — PAINEL ANALÍTICO
+# 📊 🔍 Aba — Painel Analítico
 # ===================================================================
-
 if aba == "Painel Analítico":
-    st.title("📊 Painel Analítico — Obesidade")
+    st.title("📊 Painel Analítico sobre Obesidade")
 
-    abas = st.tabs(["Visão Geral", "Distribuições", "Correlação"])
+    st.subheader("Distribuição dos Níveis de Obesidade")
+    fig, ax = plt.subplots()
+    sns.countplot(data=df, y='nivel_obesidade', order=df['nivel_obesidade'].value_counts().index, color='red', ax=ax)
+    ax.set_xlabel('Quantidade')
+    ax.set_ylabel('Nível de Obesidade')
+    st.pyplot(fig)
 
-    with abas[0]:
-        st.subheader("Distribuição dos Níveis de Obesidade")
-        fig, ax = plt.subplots(figsize=(8,5))
-        sns.countplot(data=df, y='nivel_obesidade', order=df['nivel_obesidade'].value_counts().index, color='red', ax=ax)
-        ax.set_xlabel('Quantidade')
-        st.pyplot(fig)
+    st.subheader("Distribuição da Idade, Altura e Peso")
+    fig2, axs = plt.subplots(1, 3, figsize=(15, 4))
+    sns.histplot(df['idade'], kde=True, color='red', ax=axs[0])
+    axs[0].set_title('Idade')
 
-    with abas[1]:
-        st.subheader("Distribuição da Idade e Peso")
-        col1, col2 = st.columns(2)
-        with col1:
-            fig, ax = plt.subplots()
-            sns.histplot(df['idade'], kde=True, ax=ax, color='red')
-            st.pyplot(fig)
-        with col2:
-            fig, ax = plt.subplots()
-            sns.histplot(df['peso'], kde=True, ax=ax, color='red')
-            st.pyplot(fig)
+    sns.histplot(df['altura'], kde=True, color='orange', ax=axs[1])
+    axs[1].set_title('Altura')
 
-        st.subheader("Distribuição de Tempo em Dispositivos")
-        fig, ax = plt.subplots()
-        sns.violinplot(data=df, x='nivel_obesidade', y='tempo_uso_dispositivos', palette='Reds', ax=ax)
-        st.pyplot(fig)
+    sns.histplot(df['peso'], kde=True, color='blue', ax=axs[2])
+    axs[2].set_title('Peso')
 
-    with abas[2]:
-        st.subheader("Matriz de Correlação")
-        fig, ax = plt.subplots()
-        sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='Reds', ax=ax)
-        st.pyplot(fig)
+    st.pyplot(fig2)
+
+    st.subheader("Distribuição do Tempo em Dispositivos por Nível de Obesidade")
+    fig3, ax3 = plt.subplots()
+    sns.violinplot(data=df, x='nivel_obesidade', y='tempo_uso_dispositivos', palette='Reds', ax=ax3)
+    ax3.set_xlabel('Nível de Obesidade')
+    ax3.set_ylabel('Horas por dia')
+    ax3.tick_params(axis='x', rotation=45)
+    st.pyplot(fig3)
