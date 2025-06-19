@@ -1,4 +1,5 @@
 
+# 🔥 Importações
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -14,7 +15,7 @@ label_encoder = joblib.load('label_encoder_target.pkl')
 # 🔥 Carregar base de dados para o painel
 df = pd.read_csv('Obesity.csv')
 
-# 🔥 Renomear colunas (obrigatório para funcionar o painel)
+# 🔥 Renomear colunas
 df.rename(columns={
     'Gender':'genero', 'Age':'idade', 'Height':'altura', 'Weight':'peso',
     'family_history':'historico_familiar', 'FAVC':'consome_alta_calorias_frequente',
@@ -54,7 +55,6 @@ if aba == "Sistema Preditivo":
         'Caminhada': 'Walking'
     }
     atividade_map = {'Nunca': 0, 'Pouquíssima': 1, 'Moderada': 2, 'Frequente': 3}
-    vegetais_map = {1.0: 1, 2.0: 2, 3.0: 3}
 
     # 🔥 Inputs do usuário
     genero = st.selectbox('Gênero', list(genero_map.keys()))
@@ -66,7 +66,9 @@ if aba == "Sistema Preditivo":
     alcool = st.selectbox('Frequência de consumo de álcool', list(alcool_map.keys()))
     transporte = st.selectbox('Meio de transporte mais usado', list(transporte_map.keys()))
     atividade = st.selectbox('Frequência de atividade física', list(atividade_map.keys()))
-    consumo_vegetais = st.selectbox('Consumo de vegetais nas refeições', [1.0, 2.0, 3.0])
+    consumo_vegetais = st.selectbox('Consumo de vegetais nas refeições', 
+                                     [1, 2, 3],
+                                     format_func=lambda x: {1: 'Baixo', 2: 'Médio', 3: 'Alto'}.get(x))
 
     idade = st.slider('Idade', 10, 100, 30)
     altura = st.slider('Altura (em metros)', 1.0, 2.2, 1.70)
@@ -80,13 +82,13 @@ if aba == "Sistema Preditivo":
         genero_map[genero],
         historico_map[historico],
         alta_caloria_map[consome_calorias],
-        consumo_vegetais,
         alimentacao_map[alimentacao],
         fuma_map[fuma],
         monitora_map[monitora_calorias],
         alcool_map[alcool],
         transporte_map[transporte],
-        atividade_map[atividade]
+        atividade_map[atividade],
+        consumo_vegetais
     ]
 
     # 🔥 Vetor numérico
@@ -101,6 +103,11 @@ if aba == "Sistema Preditivo":
     # 🔥 Combinar entrada final
     entrada_final = np.hstack([entrada_categorica, entrada_numerica_escalada[0]])
 
+    # 🔥 Checagem de consistência
+    if len(entrada_final) != modelo.n_features_in_:
+        st.error(f"❌ Erro na quantidade de variáveis. Esperado {modelo.n_features_in_}, recebido {len(entrada_final)}.")
+        st.stop()
+
     if st.button("Realizar Previsão"):
         resultado = modelo.predict([entrada_final])
         classe = label_encoder.inverse_transform(resultado)[0]
@@ -112,30 +119,38 @@ if aba == "Sistema Preditivo":
 if aba == "Painel Analítico":
     st.title("📊 Painel Analítico sobre Obesidade")
 
+    # ✔️ Layout em colunas
     st.subheader("Distribuição dos Níveis de Obesidade")
-    fig, ax = plt.subplots()
-    sns.countplot(data=df, y='nivel_obesidade', order=df['nivel_obesidade'].value_counts().index, color='red', ax=ax)
+    fig, ax = plt.subplots(figsize=(6,4))
+    sns.countplot(data=df, y='nivel_obesidade', color='red', ax=ax)
     ax.set_xlabel('Quantidade')
     ax.set_ylabel('Nível de Obesidade')
     st.pyplot(fig)
 
-    st.subheader("Distribuição da Idade, Altura e Peso")
-    fig2, axs = plt.subplots(1, 3, figsize=(15, 4))
-    sns.histplot(df['idade'], kde=True, color='red', ax=axs[0])
-    axs[0].set_title('Idade')
+    col1, col2 = st.columns(2)
 
-    sns.histplot(df['altura'], kde=True, color='orange', ax=axs[1])
-    axs[1].set_title('Altura')
+    with col1:
+        st.subheader("Distribuição da Idade")
+        fig1, ax1 = plt.subplots(figsize=(5,3))
+        sns.histplot(df['idade'], kde=True, color='red', ax=ax1)
+        st.pyplot(fig1)
 
-    sns.histplot(df['peso'], kde=True, color='blue', ax=axs[2])
-    axs[2].set_title('Peso')
+    with col2:
+        st.subheader("Distribuição da Altura")
+        fig2, ax2 = plt.subplots(figsize=(5,3))
+        sns.histplot(df['altura'], kde=True, color='orange', ax=ax2)
+        st.pyplot(fig2)
 
-    st.pyplot(fig2)
-
-    st.subheader("Distribuição do Tempo em Dispositivos por Nível de Obesidade")
-    fig3, ax3 = plt.subplots()
-    sns.violinplot(data=df, x='nivel_obesidade', y='tempo_uso_dispositivos', palette='Reds', ax=ax3)
-    ax3.set_xlabel('Nível de Obesidade')
-    ax3.set_ylabel('Horas por dia')
-    ax3.tick_params(axis='x', rotation=45)
+    st.subheader("Distribuição do Peso")
+    fig3, ax3 = plt.subplots(figsize=(6,4))
+    sns.histplot(df['peso'], kde=True, color='blue', ax=ax3)
     st.pyplot(fig3)
+
+    st.subheader("Tempo em Dispositivos por Nível de Obesidade")
+    fig4, ax4 = plt.subplots(figsize=(6,4))
+    sns.violinplot(data=df, x='nivel_obesidade', y='tempo_uso_dispositivos', palette='Reds', ax=ax4)
+    ax4.set_xlabel('Nível de Obesidade')
+    ax4.set_ylabel('Horas por dia')
+    ax4.tick_params(axis='x', rotation=45)
+    st.pyplot(fig4)
+
